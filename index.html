@@ -47,18 +47,8 @@ footer{text-align:center;padding:25px;color:#667}
 
 <main>
 <section id="tabla" class="card">
-<h2>⚛️ Tabla periódica interactiva</h2>
-<p>Selecciona un elemento para consultar su información y observar su modelo atómico.</p>
-<div id="periodic"></div>
-<div id="elementInfo" class="badge">Selecciona un elemento</div>
-<div id="atomPanel" class="mini" style="display:none;margin-top:15px;background:#f8fbfd;padding:16px;border-radius:12px;">
-  <h3 id="atomTitle">Elemento</h3>
-  <p><b>Tipo:</b> <span id="atomType"></span></p>
-  <p><b>Configuración electrónica:</b> <span id="electronConfig"></span></p>
-  <p><b>Distribución por niveles:</b> <span id="shellConfig"></span></p>
-  <p><b>Electrones de valencia:</b> <span id="valenceElectrons"></span></p>
-  <div class="atom-figure"><svg id="atomSvg" viewBox="0 0 360 360" role="img" aria-label="Modelo atómico"></svg></div>
-</div>
+<h2>⚛️ Tabla periódica</h2>
+<div id="periodic" aria-label="Tabla periódica de los elementos"></div>
 </section>
 
 <section id="masa" class="card" style="display:none">
@@ -294,7 +284,7 @@ const periodic=document.getElementById("periodic");
 function addElement(x){
  let d=document.createElement("div");d.className="el";
  d.innerHTML=`<strong>${x[0]}</strong><small>${x[1]}<br>${x[2]} g/mol</small>`;
- d.onclick=()=>showElement(x);
+ 
  periodic.appendChild(d);
 }
 for(let r=1;r<=7;r++){
@@ -302,7 +292,7 @@ for(let r=1;r<=7;r++){
   let x=E.find(e=>e[3]===c&&e[4]===r);
   let d=document.createElement("div");d.className="el"+(x?"":" empty");
   if(x){d.innerHTML=`<strong>${x[0]}</strong><small>${x[1]}<br>${x[2]} g/mol</small>`;
-   d.onclick=()=>showElement(x);
+   
   }
   periodic.appendChild(d);
  }
@@ -315,7 +305,7 @@ const fElements=E.filter(e=>e[3]>=4 && e[3]<=18 && (e[0] === "La" || e[0] === "C
 for(const x of fElements){
  let d=document.createElement("div");d.className="el";
  d.innerHTML=`<strong>${x[0]}</strong><small>${x[2]}</small>`;
- d.onclick=()=>showElement(x);
+ 
  fblock.appendChild(d);
 }
 periodic.appendChild(fblock);
@@ -490,31 +480,31 @@ function pHStrong(acidML,baseML){
 }
 function calcTitration(){let a=+acidVol.value,b=+baseVol.value,p=pHStrong(a,b);titrationResult.textContent=`pH ≈ ${p.toFixed(3)} | Volumen NaOH: ${b.toFixed(1)} mL`;drawCurve(a);}
 const labEquipment=[
-  ['Vaso de precipitados','lab_assets/equipo_01.png'],
-  ['Matraz Erlenmeyer','lab_assets/equipo_02.png'],
-  ['Matraz aforado','lab_assets/equipo_03.png'],
-  ['Probeta graduada','lab_assets/equipo_04.png'],
-  ['Bureta','lab_assets/equipo_05.png'],
-  ['Pipeta volumétrica','lab_assets/equipo_06.png'],
-  ['Pipeta graduada','lab_assets/equipo_07.png'],
-  ['Tubo de ensayo','lab_assets/equipo_08.png'],
-  ['Embudo','lab_assets/equipo_09.png'],
-  ['Embudo de separación','lab_assets/equipo_10.png'],
-  ['Matraz de fondo redondo','lab_assets/equipo_11.png'],
-  ['Refrigerante de Liebig','lab_assets/equipo_12.png'],
-  ['Vidrio de reloj','lab_assets/equipo_13.png'],
-  ['Cápsula de evaporación','lab_assets/equipo_14.png'],
-  ['Crisol','lab_assets/equipo_15.png'],
-  ['Mortero y pistilo','lab_assets/equipo_16.png'],
-  ['Desecador','lab_assets/equipo_17.png'],
-  ['Caja de Petri','lab_assets/equipo_18.png'],
-  ['Mechero Bunsen','lab_assets/equipo_19.png'],
-  ['Trípode','lab_assets/equipo_20.png'],
-  ['Soporte universal','lab_assets/equipo_21.png'],
-  ['Pinzas de laboratorio','lab_assets/equipo_22.png'],
-  ['Gradilla para tubos','lab_assets/equipo_23.png'],
-  ['Espátula','lab_assets/equipo_24.png'],
-  ['Frasco lavador','lab_assets/equipo_25.png']
+  ['Vaso de precipitados','./lab_assets/equipo_01.png'],
+  ['Matraz Erlenmeyer','./lab_assets/equipo_02.png'],
+  ['Matraz aforado','./lab_assets/equipo_03.png'],
+  ['Probeta graduada','./lab_assets/equipo_04.png'],
+  ['Bureta','./lab_assets/equipo_05.png'],
+  ['Pipeta volumétrica','./lab_assets/equipo_06.png'],
+  ['Pipeta graduada','./lab_assets/equipo_07.png'],
+  ['Tubo de ensayo','./lab_assets/equipo_08.png'],
+  ['Embudo','./lab_assets/equipo_09.png'],
+  ['Embudo de separación','./lab_assets/equipo_10.png'],
+  ['Matraz de fondo redondo','./lab_assets/equipo_11.png'],
+  ['Refrigerante de Liebig','./lab_assets/equipo_12.png'],
+  ['Vidrio de reloj','./lab_assets/equipo_13.png'],
+  ['Cápsula de evaporación','./lab_assets/equipo_14.png'],
+  ['Crisol','./lab_assets/equipo_15.png'],
+  ['Mortero y pistilo','./lab_assets/equipo_16.png'],
+  ['Desecador','./lab_assets/equipo_17.png'],
+  ['Caja de Petri','./lab_assets/equipo_18.png'],
+  ['Mechero Bunsen','./lab_assets/equipo_19.png'],
+  ['Trípode','./lab_assets/equipo_20.png'],
+  ['Soporte universal','./lab_assets/equipo_21.png'],
+  ['Pinzas de laboratorio','./lab_assets/equipo_22.png'],
+  ['Gradilla para tubos','./lab_assets/equipo_23.png'],
+  ['Espátula','./lab_assets/equipo_24.png'],
+  ['Frasco lavador','./lab_assets/equipo_25.png']
 ];
 let labDeck=[],labSelected=null,labScore=0,labMatched=0;
 function labShuffle(a){return [...a].sort(()=>Math.random()-.5)}
