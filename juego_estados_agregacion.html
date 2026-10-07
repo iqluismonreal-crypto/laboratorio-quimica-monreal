@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego: Estados de Agregación de la Materia</title>
+<style>
+:root {
+  --navy:#0b2942; --green:#1f7a55; --gold:#e2ad37; --bg:#eef6f4;
+  --good:#169c59; --bad:#d84a4a; --muted:#61747f; --white:#fff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#ffffff 0%,#eef6f4 100%);color:var(--navy)}
+header{background:linear-gradient(90deg,var(--navy),#164b6b);color:#fff;text-align:center;padding:18px 12px;box-shadow:0 3px 14px #0002}
+header h1{margin:0;font-size:30px}
+header p{margin:6px 0 0;font-size:15px}
+.wrap{max-width:1120px;margin:18px auto;padding:0 14px}
+.toolbar{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+button{font:inherit;font-weight:700;cursor:pointer;border-radius:12px;padding:11px 16px;border:0}
+.mode{background:#fff;color:var(--navy);border:2px solid #cfdee4}
+.mode.active{background:var(--green);color:#fff;border-color:var(--green)}
+.gold{background:var(--gold);color:#222}
+.dark{background:var(--navy);color:#fff}
+.panel{background:#fff;border-radius:20px;box-shadow:0 8px 28px #00000012;padding:22px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
+.stat{background:#f7fafb;border:1px solid #dbe6ea;border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;color:var(--green);font-size:23px;margin-top:4px}
+.scene{background:#f7fbfb;border:1px solid #dce8eb;border-radius:18px;padding:16px;text-align:center;margin-bottom:18px}
+.question{font-size:23px;font-weight:800;line-height:1.25;margin:10px auto 18px;max-width:900px}
+.answers{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;max-width:800px;margin:auto}
+.answer{background:#fff;border:2px solid #cfdee4;min-height:70px;font-size:18px;transition:.15s}
+.answer:hover{border-color:var(--green);background:#f2faf6;transform:translateY(-2px)}
+.answer.correct{background:#ddf5e8;border-color:var(--good);color:#12603c}
+.answer.wrong{background:#fde3e3;border-color:var(--bad);color:#8c2929}
+.feedback{min-height:32px;text-align:center;font-size:18px;font-weight:800;margin:16px 0 5px}
+.good{color:var(--good)} .bad{color:var(--bad)}
+.timer{height:9px;max-width:800px;margin:0 auto 15px;background:#e2eaed;border-radius:9px;overflow:hidden}
+#bar{height:100%;width:100%;background:var(--green);transition:width .1s}
+.particles{height:145px;position:relative;overflow:hidden;border-radius:14px;background:#eaf2f5;border:2px solid #d0dfe5;margin-bottom:12px}
+.particle{position:absolute;width:15px;height:15px;border-radius:50%;background:#1f7a55;box-shadow:0 0 0 3px #1f7a5520}
+.label{font-weight:800;color:var(--muted);font-size:13px}
+.finish{display:none;text-align:center}
+.finish h2{font-size:34px;margin:6px 0}
+.final{font-size:66px;color:var(--green);font-weight:900}
+.rank{font-size:21px;font-weight:800}
+.tip{color:var(--muted);font-size:13px;text-align:center;margin-top:11px}
+@media(max-width:780px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.answers{grid-template-columns:1fr}.question{font-size:20px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧪 ESTADOS DE AGREGACIÓN DE LA MATERIA</h1>
+  <p>Reto interactivo: identifica estados y cambios de estado.</p>
+</header>
+
+<div class="wrap">
+  <div class="toolbar">
+    <button class="mode active" id="m20" onclick="setMode(20)">Reto de 20</button>
+    <button class="mode" id="mTodas" onclick="setMode(24)">Reto completo</button>
+    <button class="gold" onclick="startGame()">▶ Iniciar / Reiniciar</button>
+  </div>
+
+  <div class="panel" id="game">
+    <div class="stats">
+      <div class="stat">Puntos<b id="score">0</b></div>
+      <div class="stat">Aciertos<b id="hits">0</b></div>
+      <div class="stat">Racha<b id="streak">0</b></div>
+      <div class="stat">Pregunta<b id="count">1/20</b></div>
+      <div class="stat">Tiempo<b id="time">12</b>s</div>
+    </div>
+
+    <div class="scene">
+      <div class="label" id="kind">ESTADO DE LA MATERIA</div>
+      <div class="particles" id="particles"></div>
+      <div class="question" id="question">Pregunta</div>
+      <div class="timer"><div id="bar"></div></div>
+      <div class="answers" id="answers"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="toolbar">
+        <button class="dark" id="next" onclick="nextQuestion()" disabled>➡ Siguiente</button>
+        <button class="gold" onclick="startGame()">🔄 Nueva ronda</button>
+      </div>
+      <div class="tip">Responde antes de que termine el tiempo. Las preguntas incluyen sólidos, líquidos, gases, plasma y cambios de estado.</div>
+    </div>
+  </div>
+
+  <div class="panel finish" id="finish">
+    <h2>🏆 ¡Reto terminado!</h2>
+    <div class="final" id="finalScore">0</div>
+    <div class="rank" id="rank"></div>
+    <p id="summary"></p>
+    <button class="gold" onclick="startGame()">▶ Jugar de nuevo</button>
+  </div>
+</div>
+
+<script>
+const questions = [{"kind": "state", "prompt": "Un cubo de hielo mantiene su forma y su volumen. ¿Qué estado de agregación representa?", "answer": "Sólido", "options": ["Sólido", "Líquido", "Gas", "Plasma"], "hint": "Sus partículas están muy juntas y ordenadas."}, {"kind": "state", "prompt": "El agua de un vaso toma la forma del recipiente, pero conserva prácticamente su volumen. ¿Qué estado es?", "answer": "Líquido", "options": ["Sólido", "Líquido", "Gas", "Plasma"], "hint": "Sus partículas permanecen cercanas, pero pueden desplazarse."}, {"kind": "state", "prompt": "El aire ocupa todo el recipiente disponible y puede comprimirse. ¿Qué estado es?", "answer": "Gas", "options": ["Sólido", "Líquido", "Gas", "Plasma"], "hint": "Sus partículas están muy separadas."}, {"kind": "state", "prompt": "El Sol está formado principalmente por materia extremadamente caliente y eléctricamente cargada. ¿Qué estado se presenta?", "answer": "Plasma", "options": ["Sólido", "Líquido", "Gas", "Plasma"], "hint": "Es un gas ionizado con partículas cargadas."}, {"kind": "state", "prompt": "Una piedra conserva su forma propia. ¿Qué estado presenta?", "answer": "Sólido", "options": ["Gas", "Sólido", "Plasma", "Líquido"], "hint": "Tiene forma y volumen definidos."}, {"kind": "state", "prompt": "La leche puede fluir y adopta la forma del recipiente. ¿Qué estado es?", "answer": "Líquido", "options": ["Plasma", "Gas", "Líquido", "Sólido"], "hint": "Puede fluir, pero no se expande para llenar todo el recipiente."}, {"kind": "state", "prompt": "El vapor de agua se dispersa por una habitación. ¿Qué estado representa?", "answer": "Gas", "options": ["Líquido", "Gas", "Sólido", "Plasma"], "hint": "No tiene forma ni volumen propios."}, {"kind": "state", "prompt": "Una descarga eléctrica en un tubo de neón produce materia ionizada luminosa. ¿Qué estado es?", "answer": "Plasma", "options": ["Sólido", "Líquido", "Gas", "Plasma"], "hint": "La materia contiene iones y electrones libres."}, {"kind": "change", "prompt": "El hielo pasa de sólido a líquido. ¿Cómo se llama este cambio?", "answer": "Fusión", "options": ["Fusión", "Evaporación", "Condensación", "Solidificación"], "hint": "Ocurre al fundirse un sólido."}, {"kind": "change", "prompt": "El agua líquida se transforma en vapor. ¿Cómo se llama este cambio?", "answer": "Vaporización", "options": ["Sublimación", "Vaporización", "Fusión", "Deposición"], "hint": "Puede ocurrir por evaporación o ebullición."}, {"kind": "change", "prompt": "El vapor de agua se transforma en gotas líquidas sobre una superficie fría. ¿Qué cambio ocurre?", "answer": "Condensación", "options": ["Condensación", "Fusión", "Sublimación", "Solidificación"], "hint": "Gas → líquido."}, {"kind": "change", "prompt": "El agua líquida se convierte en hielo. ¿Qué cambio ocurre?", "answer": "Solidificación", "options": ["Evaporación", "Condensación", "Solidificación", "Fusión"], "hint": "Líquido → sólido."}, {"kind": "change", "prompt": "La naftalina pasa directamente de sólido a gas sin convertirse primero en líquido. ¿Qué cambio es?", "answer": "Sublimación", "options": ["Sublimación", "Fusión", "Condensación", "Solidificación"], "hint": "Sólido → gas."}, {"kind": "change", "prompt": "En ciertas condiciones, un gas pasa directamente a sólido formando un depósito. ¿Qué cambio es?", "answer": "Deposición", "options": ["Vaporización", "Fusión", "Deposición", "Sublimación"], "hint": "Gas → sólido."}, {"kind": "state", "prompt": "¿Cuál de estos estados tiene forma y volumen definidos?", "answer": "Sólido", "options": ["Gas", "Plasma", "Sólido", "Líquido"], "hint": "Sus partículas están muy unidas."}, {"kind": "state", "prompt": "¿Cuál de estos estados tiene volumen definido pero adopta la forma del recipiente?", "answer": "Líquido", "options": ["Líquido", "Gas", "Plasma", "Sólido"], "hint": "Puede fluir."}, {"kind": "state", "prompt": "¿Cuál de estos estados no tiene ni forma ni volumen definidos?", "answer": "Gas", "options": ["Sólido", "Gas", "Líquido", "Plasma"], "hint": "Se expande para ocupar el recipiente."}, {"kind": "state", "prompt": "¿En cuál estado las partículas están ionizadas y responden a campos eléctricos y magnéticos?", "answer": "Plasma", "options": ["Líquido", "Sólido", "Gas", "Plasma"], "hint": "Ejemplos: estrellas y algunas descargas eléctricas."}, {"kind": "state", "prompt": "¿Qué estado de la materia presenta mayor libertad de movimiento entre sus partículas?", "answer": "Gas", "options": ["Sólido", "Líquido", "Gas", "Plasma"], "hint": "Sus partículas se desplazan ampliamente."}, {"kind": "state", "prompt": "¿Qué estado de la materia puede conducir electricidad debido a la presencia de partículas cargadas?", "answer": "Plasma", "options": ["Sólido", "Líquido", "Gas", "Plasma"], "hint": "Es materia ionizada."}, {"kind": "change", "prompt": "Cuando una sustancia pasa de líquido a gas por calentamiento, ¿qué transformación se está produciendo?", "answer": "Vaporización", "options": ["Vaporización", "Condensación", "Solidificación", "Deposición"], "hint": "Líquido → gas."}, {"kind": "change", "prompt": "Cuando un gas se enfría y se transforma en líquido, ¿qué ocurre?", "answer": "Condensación", "options": ["Fusión", "Condensación", "Sublimación", "Vaporización"], "hint": "Gas → líquido."}, {"kind": "change", "prompt": "Cuando un sólido se transforma directamente en gas, ¿qué ocurre?", "answer": "Sublimación", "options": ["Sublimación", "Condensación", "Solidificación", "Fusión"], "hint": "No pasa por el estado líquido."}, {"kind": "change", "prompt": "Cuando un gas se transforma directamente en sólido, ¿qué ocurre?", "answer": "Deposición", "options": ["Deposición", "Vaporización", "Fusión", "Condensación"], "hint": "Es el proceso inverso de la sublimación."}];
+let mode=20,deck=[],current=0,score=0,hits=0,streak=0,answered=false,time=12,timer=null;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+function setMode(n){mode=n;document.querySelectorAll('.mode').forEach(b=>b.classList.remove('active'));document.getElementById(n===20?'m20':'mTodas').classList.add('active');startGame();}
+function startGame(){
+  clearInterval(timer); deck=[...questions]; shuffle(deck);
+  if(mode===20) deck=deck.slice(0,20);
+  current=0;score=0;hits=0;streak=0;answered=false;
+  document.getElementById('game').style.display='block';document.getElementById('finish').style.display='none';
+  updateStats(); loadQuestion();
+}
+function renderParticles(type){
+  const box=document.getElementById('particles'); box.innerHTML='';
+  const count=type==='Sólido'?30:type==='Líquido'?26:type==='Gas'?18:22;
+  for(let i=0;i<count;i++){
+    const p=document.createElement('div');p.className='particle';
+    if(type==='Sólido'){p.style.left=(8+(i%6)*16)+'%';p.style.top=(12+Math.floor(i/6)*20)+'%';}
+    else if(type==='Líquido'){p.style.left=(8+Math.random()*84)+'%';p.style.top=(28+Math.random()*56)+'%';}
+    else if(type==='Gas'){p.style.left=(5+Math.random()*90)+'%';p.style.top=(5+Math.random()*90)+'%';}
+    else {p.style.left=(6+Math.random()*88)+'%';p.style.top=(5+Math.random()*90)+'%';p.style.background='#e2ad37';}
+    box.appendChild(p);
+  }
+}
+function loadQuestion(){
+  const q=deck[current]; answered=false;
+  document.getElementById('kind').textContent=q.kind==='state'?'IDENTIFICA EL ESTADO':'IDENTIFICA EL CAMBIO DE ESTADO';
+  document.getElementById('question').textContent=q.prompt;
+  document.getElementById('count').textContent=(current+1)+'/'+mode;
+  document.getElementById('feedback').textContent='';document.getElementById('feedback').className='feedback';
+  document.getElementById('next').disabled=true;
+  const box=document.getElementById('answers');box.innerHTML='';
+  const options=[...q.options];shuffle(options);
+  options.forEach(o=>{const b=document.createElement('button');b.className='answer';b.textContent=o;b.onclick=()=>check(o,b);box.appendChild(b);});
+  renderParticles(q.answer==='Sólido'||q.answer==='Líquido'||q.answer==='Gas'||q.answer==='Plasma'?q.answer:'Gas');
+  startTimer();
+}
+function startTimer(){clearInterval(timer);time=12;paintTimer();timer=setInterval(()=>{time-=.1;paintTimer();if(time<=0){clearInterval(timer);if(!answered)check(null,null,true);}},100);}
+function paintTimer(){document.getElementById('time').textContent=Math.max(0,Math.ceil(time));document.getElementById('bar').style.width=Math.max(0,time/12*100)+'%';document.getElementById('bar').style.background=time<4?'var(--bad)':'var(--green)';}
+function check(selected,button,timeout=false){
+ if(answered)return;answered=true;clearInterval(timer);
+ const q=deck[current];const buttons=[...document.querySelectorAll('.answer')];buttons.forEach(b=>b.disabled=true);
+ const fb=document.getElementById('feedback');const ok=selected===q.answer;
+ if(ok){hits++;streak++;score+=10+Math.max(0,Math.ceil(time))+(streak>=3?5:0);button.classList.add('correct');fb.textContent='✅ ¡Correcto! '+q.answer;fb.className='feedback good';}
+ else{streak=0;if(button)button.classList.add('wrong');buttons.forEach(b=>{if(b.textContent===q.answer)b.classList.add('correct')});fb.textContent=(timeout?'⏰ ¡Se acabó el tiempo! ':'❌ Incorrecto. ')+'La respuesta correcta es: '+q.answer+'.';fb.className='feedback bad';}
+ updateStats();document.getElementById('next').disabled=false;
+}
+function nextQuestion(){if(!answered)return;if(current>=deck.length-1)finishGame();else{current++;loadQuestion();}}
+function updateStats(){document.getElementById('score').textContent=score;document.getElementById('hits').textContent=hits;document.getElementById('streak').textContent=streak;}
+function finishGame(){
+ clearInterval(timer);document.getElementById('game').style.display='none';document.getElementById('finish').style.display='block';
+ const pct=Math.round(hits/mode*100);document.getElementById('finalScore').textContent=score+' puntos';document.getElementById('summary').textContent='Aciertos: '+hits+' de '+mode+' ('+pct+'%).';
+ document.getElementById('rank').textContent=pct>=90?'🏆 Experto en estados de la materia':pct>=75?'🥇 Excelente':pct>=60?'🥈 Muy bien':pct>=40?'🥉 Buen inicio':'📚 Necesitas practicar más';
+}
+startGame();
+</script>
+</body>
+</html>

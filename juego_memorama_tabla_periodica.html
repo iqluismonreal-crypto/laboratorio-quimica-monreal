@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memorama - Tabla Periódica</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef5f7;margin:0;color:#0d2e4c}
+header{background:#0d2e4c;color:white;padding:18px;text-align:center;position:sticky;top:0;z-index:10}
+h1{margin:0;font-size:28px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+button{border:0;border-radius:10px;padding:10px 15px;font-weight:bold;cursor:pointer}
+.primary{background:#1a7854;color:#fff} .gold{background:#e2a937;color:#222} .light{background:#fff;color:#0d2e4c}
+#board{display:grid;grid-template-columns:repeat(8,minmax(92px,1fr));gap:10px;padding:18px;max-width:1200px;margin:auto}
+.card{aspect-ratio:1/1;perspective:800px;cursor:pointer}
+.inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.card.flipped .inner,.card.matched .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;border:2px solid #0d2e4c;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box}
+.back{background:#0d2e4c;color:#fff;font-size:28px;font-weight:bold}
+.front{background:#fff;transform:rotateY(180deg)}
+.num{font-size:14px;color:#1a7854;font-weight:bold}
+.symbol{font-size:34px;font-weight:800}
+.name{font-size:13px;font-weight:700;text-align:center;padding:0 5px}
+#stats{text-align:center;font-weight:bold;margin:8px}
+@media(max-width:900px){#board{grid-template-columns:repeat(4,minmax(80px,1fr))}}
+</style>
+</head>
+<body>
+<header>
+<h1>Memorama de la Tabla Periódica</h1>
+<div id="stats">Parejas: 0 / 118 &nbsp; • &nbsp; Intentos: 0</div>
+<div class="controls">
+<button class="primary" onclick="startGame()">Nuevo juego</button>
+<button class="gold" onclick="shuffleNow()">Mezclar</button>
+<button class="light" onclick="toggleCount()">Ver números atómicos</button>
+</div>
+</header>
+<div id="board"></div>
+<script>
+const elements = [{"z": 1, "symbol": "H", "name": "Hidrógeno"}, {"z": 2, "symbol": "He", "name": "Helio"}, {"z": 3, "symbol": "Li", "name": "Litio"}, {"z": 4, "symbol": "Be", "name": "Berilio"}, {"z": 5, "symbol": "B", "name": "Boro"}, {"z": 6, "symbol": "C", "name": "Carbono"}, {"z": 7, "symbol": "N", "name": "Nitrógeno"}, {"z": 8, "symbol": "O", "name": "Oxígeno"}, {"z": 9, "symbol": "F", "name": "Flúor"}, {"z": 10, "symbol": "Ne", "name": "Neón"}, {"z": 11, "symbol": "Na", "name": "Sodio"}, {"z": 12, "symbol": "Mg", "name": "Magnesio"}, {"z": 13, "symbol": "Al", "name": "Aluminio"}, {"z": 14, "symbol": "Si", "name": "Silicio"}, {"z": 15, "symbol": "P", "name": "Fósforo"}, {"z": 16, "symbol": "S", "name": "Azufre"}, {"z": 17, "symbol": "Cl", "name": "Cloro"}, {"z": 18, "symbol": "Ar", "name": "Argón"}, {"z": 19, "symbol": "K", "name": "Potasio"}, {"z": 20, "symbol": "Ca", "name": "Calcio"}, {"z": 21, "symbol": "Sc", "name": "Escandio"}, {"z": 22, "symbol": "Ti", "name": "Titanio"}, {"z": 23, "symbol": "V", "name": "Vanadio"}, {"z": 24, "symbol": "Cr", "name": "Cromo"}, {"z": 25, "symbol": "Mn", "name": "Manganeso"}, {"z": 26, "symbol": "Fe", "name": "Hierro"}, {"z": 27, "symbol": "Co", "name": "Cobalto"}, {"z": 28, "symbol": "Ni", "name": "Níquel"}, {"z": 29, "symbol": "Cu", "name": "Cobre"}, {"z": 30, "symbol": "Zn", "name": "Zinc"}, {"z": 31, "symbol": "Ga", "name": "Galio"}, {"z": 32, "symbol": "Ge", "name": "Germanio"}, {"z": 33, "symbol": "As", "name": "Arsénico"}, {"z": 34, "symbol": "Se", "name": "Selenio"}, {"z": 35, "symbol": "Br", "name": "Bromo"}, {"z": 36, "symbol": "Kr", "name": "Criptón"}, {"z": 37, "symbol": "Rb", "name": "Rubidio"}, {"z": 38, "symbol": "Sr", "name": "Estroncio"}, {"z": 39, "symbol": "Y", "name": "Itrio"}, {"z": 40, "symbol": "Zr", "name": "Circonio"}, {"z": 41, "symbol": "Nb", "name": "Niobio"}, {"z": 42, "symbol": "Mo", "name": "Molibdeno"}, {"z": 43, "symbol": "Tc", "name": "Tecnecio"}, {"z": 44, "symbol": "Ru", "name": "Rutenio"}, {"z": 45, "symbol": "Rh", "name": "Rodio"}, {"z": 46, "symbol": "Pd", "name": "Paladio"}, {"z": 47, "symbol": "Ag", "name": "Plata"}, {"z": 48, "symbol": "Cd", "name": "Cadmio"}, {"z": 49, "symbol": "In", "name": "Indio"}, {"z": 50, "symbol": "Sn", "name": "Estaño"}, {"z": 51, "symbol": "Sb", "name": "Antimonio"}, {"z": 52, "symbol": "Te", "name": "Telurio"}, {"z": 53, "symbol": "I", "name": "Yodo"}, {"z": 54, "symbol": "Xe", "name": "Xenón"}, {"z": 55, "symbol": "Cs", "name": "Cesio"}, {"z": 56, "symbol": "Ba", "name": "Bario"}, {"z": 57, "symbol": "La", "name": "Lantano"}, {"z": 58, "symbol": "Ce", "name": "Cerio"}, {"z": 59, "symbol": "Pr", "name": "Praseodimio"}, {"z": 60, "symbol": "Nd", "name": "Neodimio"}, {"z": 61, "symbol": "Pm", "name": "Prometio"}, {"z": 62, "symbol": "Sm", "name": "Samario"}, {"z": 63, "symbol": "Eu", "name": "Europio"}, {"z": 64, "symbol": "Gd", "name": "Gadolinio"}, {"z": 65, "symbol": "Tb", "name": "Terbio"}, {"z": 66, "symbol": "Dy", "name": "Disprosio"}, {"z": 67, "symbol": "Ho", "name": "Holmio"}, {"z": 68, "symbol": "Er", "name": "Erbio"}, {"z": 69, "symbol": "Tm", "name": "Tulio"}, {"z": 70, "symbol": "Yb", "name": "Iterbio"}, {"z": 71, "symbol": "Lu", "name": "Lutecio"}, {"z": 72, "symbol": "Hf", "name": "Hafnio"}, {"z": 73, "symbol": "Ta", "name": "Tantalio"}, {"z": 74, "symbol": "W", "name": "Wolframio"}, {"z": 75, "symbol": "Re", "name": "Renio"}, {"z": 76, "symbol": "Os", "name": "Osmio"}, {"z": 77, "symbol": "Ir", "name": "Iridio"}, {"z": 78, "symbol": "Pt", "name": "Platino"}, {"z": 79, "symbol": "Au", "name": "Oro"}, {"z": 80, "symbol": "Hg", "name": "Mercurio"}, {"z": 81, "symbol": "Tl", "name": "Talio"}, {"z": 82, "symbol": "Pb", "name": "Plomo"}, {"z": 83, "symbol": "Bi", "name": "Bismuto"}, {"z": 84, "symbol": "Po", "name": "Polonio"}, {"z": 85, "symbol": "At", "name": "Astato"}, {"z": 86, "symbol": "Rn", "name": "Radón"}, {"z": 87, "symbol": "Fr", "name": "Francio"}, {"z": 88, "symbol": "Ra", "name": "Radio"}, {"z": 89, "symbol": "Ac", "name": "Actinio"}, {"z": 90, "symbol": "Th", "name": "Torio"}, {"z": 91, "symbol": "Pa", "name": "Protactinio"}, {"z": 92, "symbol": "U", "name": "Uranio"}, {"z": 93, "symbol": "Np", "name": "Neptunio"}, {"z": 94, "symbol": "Pu", "name": "Plutonio"}, {"z": 95, "symbol": "Am", "name": "Americio"}, {"z": 96, "symbol": "Cm", "name": "Curio"}, {"z": 97, "symbol": "Bk", "name": "Berkelio"}, {"z": 98, "symbol": "Cf", "name": "Californio"}, {"z": 99, "symbol": "Es", "name": "Einsteinio"}, {"z": 100, "symbol": "Fm", "name": "Fermio"}, {"z": 101, "symbol": "Md", "name": "Mendelevio"}, {"z": 102, "symbol": "No", "name": "Nobelio"}, {"z": 103, "symbol": "Lr", "name": "Lawrencio"}, {"z": 104, "symbol": "Rf", "name": "Rutherfordio"}, {"z": 105, "symbol": "Db", "name": "Dubnio"}, {"z": 106, "symbol": "Sg", "name": "Seaborgio"}, {"z": 107, "symbol": "Bh", "name": "Bohrio"}, {"z": 108, "symbol": "Hs", "name": "Hassio"}, {"z": 109, "symbol": "Mt", "name": "Meitnerio"}, {"z": 110, "symbol": "Ds", "name": "Darmstadtio"}, {"z": 111, "symbol": "Rg", "name": "Roentgenio"}, {"z": 112, "symbol": "Cn", "name": "Copernicio"}, {"z": 113, "symbol": "Nh", "name": "Nihonio"}, {"z": 114, "symbol": "Fl", "name": "Flerovio"}, {"z": 115, "symbol": "Mc", "name": "Moscovio"}, {"z": 116, "symbol": "Lv", "name": "Livermorio"}, {"z": 117, "symbol": "Ts", "name": "Tenesino"}, {"z": 118, "symbol": "Og", "name": "Oganesón"}];
+let deck=[], first=null, second=null, lock=false, matched=0, attempts=0, showNumber=true;
+
+function buildDeck(){
+  deck=[];
+  elements.forEach(e=>{
+    deck.push({pair:e.z, type:'symbol', main:e.symbol, sub:e.name, z:e.z});
+    deck.push({pair:e.z, type:'name', main:e.name, sub:e.symbol, z:e.z});
+  });
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+}
+function startGame(){
+  buildDeck(); shuffle(deck); first=null;second=null;lock=false;matched=0;attempts=0;
+  document.getElementById('stats').textContent=`Parejas: 0 / 118 • Intentos: 0`;
+  render();
+}
+function render(){
+  const board=document.getElementById('board'); board.innerHTML='';
+  deck.forEach((c,i)=>{
+    const el=document.createElement('div'); el.className='card'; el.dataset.i=i;
+    el.innerHTML=`<div class="inner">
+      <div class="face back">⚗️</div>
+      <div class="face front">
+        <div class="num">${showNumber?c.z:''}</div>
+        <div class="${c.type==='symbol'?'symbol':'name'}">${c.main}</div>
+        <div class="name">${c.type==='symbol'?'símbolo':'elemento'}</div>
+      </div>
+    </div>`;
+    el.onclick=()=>flip(i,el);
+    board.appendChild(el);
+  });
+}
+function flip(i,el){
+  if(lock || el.classList.contains('flipped') || el.classList.contains('matched')) return;
+  el.classList.add('flipped');
+  if(!first){first={i,el};return;}
+  second={i,el}; attempts++; lock=true;
+  const a=deck[first.i], b=deck[second.i];
+  if(a.pair===b.pair && a.type!==b.type){
+    matched++; first.el.classList.add('matched'); second.el.classList.add('matched'); lock=false; first=null; second=null;
+    updateStats();
+    if(matched===118) setTimeout(()=>alert('¡Excelente! Completaste las 118 parejas.'),250);
+  } else {
+    setTimeout(()=>{first.el.classList.remove('flipped');second.el.classList.remove('flipped');first=null;second=null;lock=false;},800);
+    updateStats();
+  }
+}
+function updateStats(){
+  document.getElementById('stats').textContent=`Parejas: ${matched} / 118 • Intentos: ${attempts}`;
+}
+function shuffleNow(){
+  if(lock) return;
+  shuffle(deck); first=null;second=null;render();
+}
+function toggleCount(){
+  showNumber=!showNumber; render();
+}
+startGame();
+</script>
+</body>
+</html>
