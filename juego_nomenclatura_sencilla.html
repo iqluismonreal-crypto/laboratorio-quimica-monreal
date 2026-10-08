@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reto de Nomenclatura Química</title>
+<style>
+:root{--bg:#f7fafc;--card:#fff;--text:#172033;--muted:#5d687a;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--border:#d9e0ea}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:900px;margin:auto;padding:22px}.top{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}.title{font-size:28px;font-weight:800}.sub{color:var(--muted);margin-top:5px}.stats{display:flex;gap:10px;flex-wrap:wrap}.pill{background:var(--card);border:1px solid var(--border);padding:9px 14px;border-radius:999px;font-weight:700}
+.levels{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.level{border:1px solid var(--border);background:white;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:700}.level.active{background:#e8f0ff;border-color:#8eb0f8;color:#1747a6}.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:25px}.family{font-size:14px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.06em}.question{font-size:38px;text-align:center;font-weight:800;margin:24px 0}.prompt{text-align:center;font-size:19px;margin-bottom:20px}.options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.option{min-height:58px;border:1px solid var(--border);background:white;border-radius:12px;padding:12px;font-size:17px;font-weight:700;cursor:pointer}.option:hover{border-color:#8eb0f8;background:#f5f8ff}.option:disabled{cursor:default}.option.correct{background:#dcfce7;border-color:#86efac;color:#166534}.option.wrong{background:#fee2e2;border-color:#fca5a5;color:#991b1b}.feedback{margin-top:20px;border-radius:12px;padding:16px;line-height:1.5;display:none}.feedback.show{display:block}.feedback.ok{background:#ecfdf5;border:1px solid #86efac}.feedback.bad{background:#fef2f2;border:1px solid #fca5a5}.actions{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}.action{border:0;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer}.next{background:var(--accent);color:white}.restart{background:#e5e7eb;color:#111827}.hint{margin-top:16px;color:var(--muted);font-size:14px;text-align:center}.finish{text-align:center;padding:25px}.bigscore{font-size:44px;font-weight:900;margin:10px}
+@media(max-width:620px){.options{grid-template-columns:1fr}.question{font-size:30px}.wrap{padding:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><div class="title">🧪 Reto de Nomenclatura Química</div><div class="sub">Óxidos · Hidruros · Hidróxidos · Hidrácidos · Sales binarias</div></div>
+    <div class="stats"><span class="pill">Puntos: <b id="score">0</b></span><span class="pill">Pregunta: <b id="num">1</b>/10</span><span class="pill">Nivel: <b id="levelName">1</b></span></div>
+  </div>
+  <div class="levels">
+    <button class="level active" data-level="1">1 · Fórmula → nombre</button>
+    <button class="level" data-level="2">2 · Nombre → fórmula</button>
+    <button class="level" data-level="3">3 · Identifica la familia</button>
+    <button class="level" data-level="4">4 · Reto mixto</button>
+  </div>
+  <div class="card" id="gameCard">
+    <div class="family" id="family">Nomenclatura básica</div>
+    <div class="prompt" id="prompt">¿Cómo se llama el siguiente compuesto?</div>
+    <div class="question" id="question">NaOH</div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="actions"><button class="action next" id="next" disabled>Siguiente pregunta →</button><button class="action restart" id="restart">🔄 Reiniciar</button></div>
+    <div class="hint">Después de responder se muestra una explicación breve para aprender la regla de nomenclatura.</div>
+  </div>
+</div>
+<script>
+(()=>{
+const bank=[
+ {f:'Na2O',n:'Óxido de sodio',fam:'Óxido metálico',e:'Metal + oxígeno forman un óxido metálico. El sodio trabaja aquí con carga +1 y el oxígeno con −2, por eso la fórmula es Na₂O.'},
+ {f:'CaO',n:'Óxido de calcio',fam:'Óxido metálico',e:'Calcio es un metal y al combinarse con oxígeno forma un óxido metálico: óxido de calcio.'},
+ {f:'Al2O3',n:'Óxido de aluminio',fam:'Óxido metálico',e:'Aluminio es un metal. Con oxígeno forma Al₂O₃, llamado óxido de aluminio.'},
+ {f:'Fe2O3',n:'Óxido de hierro (III)',fam:'Óxido metálico',e:'El hierro puede presentar varias valencias. En Fe₂O₃ trabaja con +3, por eso se indica hierro (III).'},
+ {f:'CO2',n:'Dióxido de carbono',fam:'Óxido no metálico',e:'Carbono es un no metal. Para dos oxígenos se usa el prefijo di-: dióxido de carbono.'},
+ {f:'SO2',n:'Dióxido de azufre',fam:'Óxido no metálico',e:'Azufre es no metal y hay dos átomos de oxígeno; por eso se llama dióxido de azufre.'},
+ {f:'SO3',n:'Trióxido de azufre',fam:'Óxido no metálico',e:'Hay tres oxígenos unidos al azufre. El prefijo tri- indica tres: trióxido de azufre.'},
+ {f:'H2O',n:'Agua',fam:'Compuesto de hidrógeno',e:'H₂O es el nombre común agua. En nomenclatura sistemática también puede describirse como óxido de dihidrógeno.'},
+ {f:'NaH',n:'Hidruro de sodio',fam:'Hidruro metálico',e:'Metal + hidrógeno, donde el hidrógeno actúa como H⁻, forma un hidruro metálico: hidruro de sodio.'},
+ {f:'CaH2',n:'Hidruro de calcio',fam:'Hidruro metálico',e:'Calcio es metal y se combina con dos hidrógenos como H⁻: CaH₂, hidruro de calcio.'},
+ {f:'NaOH',n:'Hidróxido de sodio',fam:'Hidróxido',e:'El grupo OH⁻ identifica a los hidróxidos. Na⁺ + OH⁻ da NaOH: hidróxido de sodio.'},
+ {f:'Ca(OH)2',n:'Hidróxido de calcio',fam:'Hidróxido',e:'El grupo OH⁻ aparece dos veces para compensar Ca²⁺. Se llama hidróxido de calcio.'},
+ {f:'Al(OH)3',n:'Hidróxido de aluminio',fam:'Hidróxido',e:'Al³⁺ necesita tres grupos OH⁻. La fórmula es Al(OH)₃: hidróxido de aluminio.'},
+ {f:'Fe(OH)3',n:'Hidróxido de hierro (III)',fam:'Hidróxido',e:'En Fe(OH)₃, cada OH⁻ vale −1; tres grupos suman −3, por lo que Fe está en +3.'},
+ {f:'HCl',n:'Ácido clorhídrico',fam:'Hidrácido',e:'H + no metal, sin oxígeno, forma un hidrácido cuando está en disolución acuosa. HCl(aq) es ácido clorhídrico.'},
+ {f:'HBr',n:'Ácido bromhídrico',fam:'Hidrácido',e:'El hidrógeno unido al bromo forma HBr; en agua se nombra ácido bromhídrico.'},
+ {f:'H2S',n:'Ácido sulfhídrico',fam:'Hidrácido',e:'H₂S en disolución acuosa se denomina ácido sulfhídrico. Es un hidrácido porque no contiene oxígeno.'},
+ {f:'HI',n:'Ácido yodhídrico',fam:'Hidrácido',e:'HI en agua recibe el nombre ácido yodhídrico. Pertenece a los hidrácidos.'},
+ {f:'NaCl',n:'Cloruro de sodio',fam:'Sal binaria',e:'Metal + no metal forman una sal binaria. Se nombra primero el no metal terminado en -uro: cloruro de sodio.'},
+ {f:'CaCl2',n:'Cloruro de calcio',fam:'Sal binaria',e:'El anión cloruro es Cl⁻ y Ca²⁺ necesita dos cloruros. Se llama cloruro de calcio.'},
+ {f:'KBr',n:'Bromuro de potasio',fam:'Sal binaria',e:'Bromo forma el anión bromuro. Con K⁺ se obtiene KBr: bromuro de potasio.'},
+ {f:'MgS',n:'Sulfuro de magnesio',fam:'Sal binaria',e:'Azufre como anión S²⁻ se llama sulfuro. Con Mg²⁺ forma MgS: sulfuro de magnesio.'},
+ {f:'FeCl2',n:'Cloruro de hierro (II)',fam:'Sal binaria',e:'Dos Cl⁻ aportan −2, así que el hierro está en +2. Por eso: cloruro de hierro (II).'},
+ {f:'FeCl3',n:'Cloruro de hierro (III)',fam:'Sal binaria',e:'Tres Cl⁻ aportan −3, por lo que Fe está en +3. Se llama cloruro de hierro (III).'},
+ {f:'CuO',n:'Óxido de cobre (II)',fam:'Óxido metálico',e:'El oxígeno vale −2; por tanto el cobre en CuO está en +2. Se indica cobre (II).'},
+ {f:'Cu2O',n:'Óxido de cobre (I)',fam:'Óxido metálico',e:'Un O²⁻ requiere dos Cu⁺. Por eso el cobre está en +1: óxido de cobre (I).'},
+ {f:'N2O5',n:'Pentóxido de dinitrógeno',fam:'Óxido no metálico',e:'Hay dos átomos de nitrógeno y cinco de oxígeno: di- + nitrógeno y penta- + óxido.'},
+ {f:'P2O5',n:'Pentóxido de difósforo',fam:'Óxido no metálico',e:'La fórmula contiene dos fósforos y cinco oxígenos, por eso se usa di- y penta-.'},
+ {f:'LiOH',n:'Hidróxido de litio',fam:'Hidróxido',e:'Li⁺ se combina con OH⁻ en proporción 1:1. El grupo OH identifica al hidróxido.'},
+ {f:'Ba(OH)2',n:'Hidróxido de bario',fam:'Hidróxido',e:'Ba²⁺ requiere dos OH⁻. Por eso Ba(OH)₂ se llama hidróxido de bario.'}
+];
+let level=1,score=0,q=0,current=null,answered=false,used=[];
+const $=id=>document.getElementById(id), question=$('question'), options=$('options'), feedback=$('feedback'), next=$('next');
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function normalize(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function pick(){let pool=bank.filter((x,i)=>!used.includes(i)); if(!pool.length){used=[];pool=bank} const x=pool[Math.floor(Math.random()*pool.length)]; used.push(bank.indexOf(x)); return x}
+function familyDistractors(correct){return shuffle([...new Set(bank.map(x=>x.fam).filter(x=>x!==correct))]).slice(0,3)}
+function nameDistractors(correct){return shuffle([...new Set(bank.map(x=>x.n).filter(x=>x!==correct))]).slice(0,3)}
+function formulaDistractors(correct){return shuffle([...new Set(bank.map(x=>x.f).filter(x=>x!==correct))]).slice(0,3)}
+function render(){
+ answered=false; next.disabled=true; feedback.className='feedback'; feedback.innerHTML=''; current=pick(); $('num').textContent=q+1; $('levelName').textContent=level;
+ let opts=[];
+ if(level===1){$('prompt').textContent='¿Cómo se llama el siguiente compuesto?';question.textContent=current.f;opts=[current.n,...nameDistractors(current.n)];$('family').textContent=current.fam}
+ if(level===2){$('prompt').textContent='Selecciona la fórmula correcta.';question.textContent=current.n;opts=[current.f,...formulaDistractors(current.f)];$('family').textContent=current.fam}
+ if(level===3){$('prompt').textContent='¿A qué familia pertenece?';question.textContent=current.f;opts=[current.fam,...familyDistractors(current.fam)];$('family').textContent='Clasificación del compuesto'}
+ if(level===4){let mode=Math.floor(Math.random()*3); if(mode===0){$('prompt').textContent='¿Cómo se llama?';question.textContent=current.f;opts=[current.n,...nameDistractors(current.n)]}else if(mode===1){$('prompt').textContent='Selecciona la fórmula.';question.textContent=current.n;opts=[current.f,...formulaDistractors(current.f)]}else{$('prompt').textContent='Identifica la familia.';question.textContent=current.f;opts=[current.fam,...familyDistractors(current.fam)]} $('family').textContent='Reto mixto'}
+ options.innerHTML='';shuffle(opts).forEach(v=>{const b=document.createElement('button');b.className='option';b.type='button';b.textContent=v;b.addEventListener('click',()=>answer(v,b));options.appendChild(b)})
+}
+function answer(value,button){if(answered)return;answered=true;[...options.children].forEach(b=>b.disabled=true);let correct= level===3?current.fam: (level===2?current.f:current.n); if(level===4){let prompt=$('prompt').textContent;correct=prompt.includes('fórmula')?current.f:prompt.includes('familia')?current.fam:current.n}
+ if(normalize(value)===normalize(correct)){score+=10;$('score').textContent=score;button.classList.add('correct');feedback.className='feedback show ok';feedback.innerHTML='<b>✅ ¡Correcto! +10 puntos.</b><br>'+current.e}else{button.classList.add('wrong');[...options.children].find(b=>normalize(b.textContent)===normalize(correct))?.classList.add('correct');feedback.className='feedback show bad';feedback.innerHTML='<b>❌ Incorrecto.</b> La respuesta correcta es <b>'+correct+'</b>.<br>'+current.e} next.disabled=false}
+next.addEventListener('click',()=>{if(q>=9){finish();return}q++;render()});
+function finish(){$('gameCard').innerHTML='<div class="finish"><div class="title">🏆 ¡Nivel terminado!</div><div class="bigscore">'+score+' puntos</div><p>Has completado 10 preguntas. Puedes repetir el nivel o elegir otro.</p><div class="actions"><button class="action next" id="again">Jugar de nuevo</button></div></div>';document.getElementById('again').addEventListener('click',()=>location.reload())}
+$('restart').addEventListener('click',()=>location.reload());document.querySelectorAll('.level').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.level').forEach(x=>x.classList.remove('active'));b.classList.add('active');level=Number(b.dataset.level);score=0;q=0;used=[];$('score').textContent=0;render()}));
+render();
+})();
+</script>
+</body>
+</html>
