@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador: temperatura y estados de la materia</title>
+<style>
+:root{--bg:#eef6fb;--panel:#fff;--ink:#17324d;--blue:#168bd2;--line:#b8d6e8}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#e9f5fc,#f7fbff);color:var(--ink);padding:22px}
+main{max-width:1000px;margin:auto}
+h1{text-align:center;margin:4px 0 8px;font-size:clamp(1.5rem,3vw,2.2rem)}
+.intro{text-align:center;margin:0 auto 20px;max-width:760px;line-height:1.5}
+.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.85fr);gap:18px}
+.panel{background:var(--panel);border:1px solid #d4e6f1;border-radius:18px;padding:18px;box-shadow:0 8px 25px #17476a12}
+canvas{display:block;width:100%;height:auto;background:linear-gradient(#f5fbff,#e5f4fb);border-radius:12px;border:1px solid #d4e6f1}
+.controls{margin-top:16px}
+label{font-weight:700;display:flex;justify-content:space-between;gap:10px;align-items:center}
+input[type=range]{width:100%;margin:15px 0;accent-color:var(--blue);cursor:pointer}
+.scale{display:flex;justify-content:space-between;font-size:.82rem;color:#57748a}
+.temp{font-size:1.4rem;font-weight:800;color:#087ab8}
+.state{display:inline-block;padding:7px 12px;border-radius:999px;background:#dff3ff;font-weight:800;margin:10px 0}
+h2{font-size:1.15rem;margin:0 0 10px}
+.explain{line-height:1.55;min-height:92px}
+.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{border:0;border-radius:10px;padding:10px 14px;background:#147fbd;color:white;font-weight:700;cursor:pointer}
+button.secondary{background:#e5f1f8;color:#164461}
+button:hover{filter:brightness(.96)}
+.note{font-size:.88rem;color:#567287;line-height:1.45;margin-top:12px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.88rem;margin-top:10px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+@media(max-width:720px){body{padding:12px}.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>🌡️ ¿Qué hace la temperatura a las partículas?</h1>
+<p class="intro">Mueve la barra para enfriar o calentar el agua. Observa cómo cambia el movimiento de las partículas y cómo algunas escapan del líquido durante la evaporación.</p>
+<div class="layout">
+<section class="panel">
+<canvas id="beaker" width="700" height="500" aria-label="Vaso de precipitados con partículas en movimiento"></canvas>
+<div class="legend"><span><i class="dot" style="background:#168bd2"></i>Partículas del líquido</span><span><i class="dot" style="background:#ef8b35"></i>Partículas evaporadas</span></div>
+<div class="controls">
+<label for="temperature">Temperatura <span class="temp" id="tempValue">25 °C</span></label>
+<input id="temperature" type="range" min="-20" max="130" value="25" step="1">
+<div class="scale"><span>−20 °C · Congelación</span><span>100 °C · Ebullición*</span><span>130 °C</span></div>
+<div class="buttons">
+<button id="cool" class="secondary">❄ Enfriar</button>
+<button id="heat">🔥 Calentar</button>
+<button id="reset" class="secondary">↺ Reiniciar</button>
+</div>
+</div>
+</section>
+<aside class="panel">
+<h2>Observa y aprende</h2>
+<div class="state" id="state">Líquido</div>
+<p class="explain" id="explanation">Las partículas se mueven y se deslizan unas entre otras. El líquido conserva su volumen, pero adopta la forma del vaso.</p>
+<h2>¿Qué está ocurriendo?</h2>
+<p id="detail" class="explain">Al aumentar la temperatura, las partículas adquieren más energía cinética y se mueven más rápido.</p>
+<h2>Pregunta para el estudiante</h2>
+<p id="question" class="explain">¿Qué diferencias observas entre el movimiento de las partículas cuando el agua está fría y cuando está caliente?</p>
+<p class="note">*La temperatura de ebullición del agua es aproximadamente 100 °C a presión atmosférica normal. Este modelo es esquemático: no representa escalas reales de tamaño ni distancias entre partículas.</p>
+</aside>
+</div>
+</main>
+<script>
+const canvas=document.getElementById('beaker'),ctx=canvas.getContext('2d');
+const slider=document.getElementById('temperature'),tempValue=document.getElementById('tempValue');
+const stateEl=document.getElementById('state'),explanation=document.getElementById('explanation'),detail=document.getElementById('detail'),question=document.getElementById('question');
+const W=canvas.width,H=canvas.height;
+const cup={x:150,y:95,w:400,h:345};
+let particles=[],vapour=[],temperature=25,last=0;
+function rand(a,b){return a+Math.random()*(b-a)}
+function makeParticles(){particles=[];for(let i=0;i<78;i++){particles.push({x:cup.x+22+Math.random()*(cup.w-44),y:cup.y+155+Math.random()*165,vx:rand(-1,1),vy:rand(-1,1),r:rand(5,7)})}vapour=[]}
+makeParticles();
+function getRegime(t){if(t<=0)return 'solid';if(t<100)return 'liquid';return 'gas'}
+function updateText(){
+ temperature=+slider.value;tempValue.textContent=temperature+' °C';
+ const regime=getRegime(temperature);
+ if(regime==='solid'){
+ stateEl.textContent='Sólido (hielo)';
+ explanation.textContent='Al congelarse, las partículas quedan ordenadas y vibran alrededor de posiciones casi fijas. No se desplazan libremente como en el líquido.';
+ detail.textContent='Al bajar la temperatura, disminuye la energía cinética. En el modelo, las partículas se agrupan y su movimiento se reduce.';
+ question.textContent='¿Las partículas dejan de moverse por completo o siguen vibrando en su lugar?';
+ }else if(regime==='liquid'){
+ stateEl.textContent=temperature<25?'Líquido frío':'Líquido';
+ explanation.textContent='Las partículas permanecen próximas, pero pueden cambiar de posición y deslizarse unas entre otras. Por eso el agua fluye y toma la forma del vaso.';
+ detail.textContent=temperature<25?'El agua está más fría: las partículas se mueven más despacio.':'Al calentar el agua, aumenta la energía cinética y las partículas se mueven más rápido.';
+ question.textContent='¿Qué ocurre con la rapidez de las partículas cuando subes la temperatura?';
+ }else{
+ stateEl.textContent='Ebullición / vapor';
+ explanation.textContent='A temperaturas cercanas a la ebullición, se forman burbujas de vapor en todo el líquido y muchas partículas pasan a la fase gaseosa.';
+ detail.textContent='Las partículas tienen mucha energía y se separan del líquido. La evaporación ocurre desde la superficie incluso por debajo de 100 °C; la ebullición ocurre en todo el líquido.';
+ question.textContent='¿En qué se diferencia la evaporación de la ebullición?';
+ }
+}
+function drawBeaker(){
+ ctx.clearRect(0,0,W,H);
+ // backdrop and thermometer
+ ctx.fillStyle='#f5fbff';ctx.fillRect(0,0,W,H);
+ ctx.fillStyle='#d7edf8';ctx.fillRect(cup.x+5,cup.y+5,cup.w-10,cup.h-5);
+ // liquid level and tint
+ let regime=getRegime(temperature);
+ ctx.fillStyle=temperature<=0?'rgba(151,216,245,.82)':temperature>=100?'rgba(244,180,105,.5)':'rgba(57,169,226,.38)';
+ ctx.fillRect(cup.x+7,cup.y+150,cup.w-14,cup.h-155);
+ // glass outline
+ ctx.strokeStyle='#5a9dbd';ctx.lineWidth=7;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(cup.x,cup.y);ctx.lineTo(cup.x+10,cup.y+cup.h-18);ctx.quadraticCurveTo(cup.x+12,cup.y+cup.h,cup.x+35,cup.y+cup.h);ctx.lineTo(cup.x+cup.w-35,cup.y+cup.h);ctx.quadraticCurveTo(cup.x+cup.w-12,cup.y+cup.h,cup.x+cup.w-10,cup.y+cup.h-18);ctx.lineTo(cup.x+cup.w,cup.y);ctx.stroke();
+ ctx.beginPath();ctx.ellipse(cup.x+cup.w/2,cup.y,cup.w/2,15,0,0,Math.PI*2);ctx.stroke();
+ // graduations
+ ctx.strokeStyle='#6ba9c4';ctx.lineWidth=2;for(let i=0;i<6;i++){let y=cup.y+185+i*24;ctx.beginPath();ctx.moveTo(cup.x+cup.w-42,y);ctx.lineTo(cup.x+cup.w-22,y);ctx.stroke()}
+ // particles
+ for(let p of particles){
+  ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+  ctx.fillStyle=regime==='solid'?'#5c9dc0':'#168bd2';ctx.fill();
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=1.5;ctx.stroke();
+ }
+ for(let p of vapour){ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='#ef8b35';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke()}
+ // labels
+ ctx.fillStyle='#17324d';ctx.font='bold 19px Arial';ctx.textAlign='center';
+ ctx.fillText(regime==='solid'?'PARTÍCULAS ORDENADAS':regime==='liquid'?'PARTÍCULAS EN MOVIMIENTO':'PARTÍCULAS ESCAPANDO',W/2,40);
+ if(temperature>=100){ctx.font='16px Arial';ctx.fillStyle='#b76519';ctx.fillText('Vapor',W/2,75)}
+}
+function tick(ts){
+ const dt=Math.min((ts-last)/16.67||1,2);last=ts;
+ const regime=getRegime(temperature);
+ const speed=regime==='solid'?0.15:0.25+Math.max(0,temperature+20)/150*2.1;
+ for(let p of particles){
+  if(regime==='solid'){
+   p.x+=Math.sin(ts/550+p.r)*.12;p.y+=Math.cos(ts/500+p.r)*.12;
+   // hold particles in an orderly lattice
+  }else{
+   p.x+=p.vx*speed*dt;p.y+=p.vy*speed*dt;
+   if(p.x<cup.x+22||p.x>cup.x+cup.w-22)p.vx*=-1;
+   if(p.y<cup.y+160||p.y>cup.y+cup.h-18)p.vy*=-1;
+   if(Math.random()<.025){p.vx=rand(-1,1);p.vy=rand(-1,1)}
+  }
+ }
+ if(temperature>20 && Math.random()<(temperature>=100?.15:.008+(temperature/100)*.035)){
+  let p=particles[Math.floor(Math.random()*particles.length)];
+  if(p.y<cup.y+cup.h-60)vapour.push({x:p.x,y:cup.y+145,vx:rand(-.7,.7),vy:rand(-1.6,-.5),r:rand(4,6),life:0});
+ }
+ vapour=vapour.filter(p=>p.life<170);
+ for(let p of vapour){p.x+=p.vx*dt;p.y+=p.vy*dt;p.life+=dt;p.r*=.999}
+ drawBeaker();requestAnimationFrame(tick)
+}
+slider.addEventListener('input',updateText);
+document.getElementById('cool').addEventListener('click',()=>{slider.value=Math.max(-20,+slider.value-10);updateText()});
+document.getElementById('heat').addEventListener('click',()=>{slider.value=Math.min(130,+slider.value+10);updateText()});
+document.getElementById('reset').addEventListener('click',()=>{slider.value=25;makeParticles();updateText()});
+updateText();requestAnimationFrame(tick);
+</script>
+</body>
+</html>
